@@ -578,7 +578,7 @@ err_t si5351_write8 (uint8_t reg, uint8_t value)
 							  1,								// how many bytes to expect returned
 							  100);								// timeout
 
-  return ERROR_NONE;
+  return status;
 }
 
 /**************************************************************************/
@@ -600,6 +600,6 @@ err_t si5351_read8(uint8_t reg, uint8_t *value)
 							  1,								// how many bytes to expect returned
 							  100);								// timeout
 
-  return ERROR_NONE;
+  return status;
 }
 
