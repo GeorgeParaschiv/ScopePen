@@ -95,10 +95,20 @@ void sample_gpio_dma()
 
 }
 
+void uart_transmit_buffer(uint16_t *buffer, size_t length)
+{
+	for (size_t i = 0; i < length; i++) {
+		uint8_t data[2];
+		data[0] = buffer[i] & 0xFF;
+		data[1] = (buffer[i] >> 8) & 0xFF;
+		HAL_UART_Transmit(&huart2, data, 2, HAL_MAX_DELAY);
+	}
+}
+
 void dma_transfer_complete_callback(DMA_HandleTypeDef *hdma)
 {
 	dma_done = 1;
-	printf("DMA Complete\r\n");
+	//printf("DMA Complete\r\n");
 }
 
 void register_dma_callbacks()
@@ -157,21 +167,9 @@ int main(void)
 
 	si5351_enableOutputs(0xFF);
 
-	printf("Clock IC Programmed\r\n");
+//printf("Clock IC Programmed\r\n");
 
 	register_dma_callbacks();
-
-	sample_gpio_dma();
-
-	while(!dma_done);
-
-	for (int i = 0; i < 100; i++){
-		for (int j = 0; j < 9; j++){
-			printf("%f,", convert(gpio_buffer[i*10 + j]));
-		}
-		printf("%f\r\n", convert(gpio_buffer[i*10 + 9]));
-		HAL_Delay(50);
-	}
 
 	/* USER CODE END 2 */
 
@@ -180,6 +178,11 @@ int main(void)
 	while (1)
 	{
 		/* USER CODE END WHILE */
+		sample_gpio_dma();
+
+		while(!dma_done);
+
+		uart_transmit_buffer(gpio_buffer, NUM_SAMPLES);
 
 		/* USER CODE BEGIN 3 */
 	}
@@ -320,7 +323,7 @@ static void MX_DMA_Init(void)
 	hdma_memtomem_dma2_stream0.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
 	hdma_memtomem_dma2_stream0.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
 	hdma_memtomem_dma2_stream0.Init.Mode = DMA_NORMAL;
-	hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_LOW;
+	hdma_memtomem_dma2_stream0.Init.Priority = DMA_PRIORITY_HIGH;
 	hdma_memtomem_dma2_stream0.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
 	hdma_memtomem_dma2_stream0.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_FULL;
 	hdma_memtomem_dma2_stream0.Init.MemBurst = DMA_MBURST_SINGLE;
