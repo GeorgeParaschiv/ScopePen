@@ -117,7 +117,32 @@ void sample_gpio_dma()
 }
 
 void voltage_gain(uint32_t voltage){
-	return;
+
+    // GPIOB1 = PB1, GPIOB2 = PB2
+    // Set combinations for 4 voltage ranges
+    if (voltage <= 100) {
+        // VOLTAGE MULTIPLIER = 10; GPIOB1 HIGH, GPIOB2 HIGH
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
+        printf("MULTIPLIER = 10\r\n");
+    } else if (voltage <= 500) {
+        // VOLTAGE MULTIPLIER = 5; GPIOB1 HIGH, GPIOB2 LOW
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
+        printf("MULTIPLIER = 5\r\n");
+    } else if (voltage <= 2000) {
+        // VOLTAGE MULTIPLIER = 2; GPIOB1 LOW, GPIOB2 HIGH
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
+        printf("MULTIPLIER = 2\r\n");
+    } else {
+        // VOLTAGE_MULTIPLIER = 1; GPIOB1 LOW, GPIOB2 LOW
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+        HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
+        printf("MULTIPLIER = 1\r\n");
+    }
+
+    return;
 }
 
 void window_scale(uint32_t frames){
@@ -139,10 +164,11 @@ void handle_spi_received_data(uint16_t *rx_buf, size_t len)
 
 		switch(identifier){
 			case 1:
-				//voltage_gain(value);
+				voltage_gain(value);
 				return;
 			case 2:
 				window_scale(value);
+				return;
 			case 3:
 				//voltage_offset(value);
 				return;
@@ -271,6 +297,7 @@ int main(void)
 
 	register_dma_callbacks();
 
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
 
 
 	//uart_transmit_buffer(gpio_buffer, NUM_SAMPLES);
@@ -289,7 +316,7 @@ int main(void)
 			printf("%X %X\r\n", gpio_buffer[i], gpio_buffer[i] & GPIO_MASK);
 		}
 		spi_gpio_transfer();
-		HAL_Delay(200);
+		HAL_Delay(250);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -513,6 +540,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|GPIO_PIN_2, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
@@ -535,6 +565,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB1 PB2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
